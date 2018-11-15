@@ -1,0 +1,63 @@
+{
+    "name": "lucid-ng2",
+    "displayName": "lucid-ng2",
+    "description": "Tools to make it easier to create and manage angular 2 modules and components",
+    "version": "0.0.1",
+    "publisher": "lucid",
+    "engines": {
+        "vscode": "^1.18.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:lucid-ng2.create-component",
+        "onCommand:lucid-ng2.create-directive",
+        "onCommand:lucid-ng2.create-module"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "menus": {
+            "explorer/context": [{
+                "command": "lucid-ng2.create-component",
+                "group": "1_modification",
+                "when": "explorerViewletVisible"
+            },{
+                "command": "lucid-ng2.create-directive",
+                "group": "1_modification",
+                "when": "explorerViewletVisible"
+            },{
+                "command": "lucid-ng2.create-module",
+                "group": "1_modification",
+                "when": "explorerViewletVisible"
+            }]
+        },
+        "commands": [
+            {
+                "command": "lucid-ng2.create-component",
+                "title": "Create ng2 component"
+            },
+            {
+                "command": "lucid-ng2.create-directive",
+                "title": "Create ng2 directive"
+            },
+            {
+                "command": "lucid-ng2.create-module",
+                "title": "Create ng2 module"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.6",
+        "@types/node": "^7.0.43",
+        "@types/mocha": "^2.2.42"
+    }
+}
