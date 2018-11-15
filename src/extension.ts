@@ -25,12 +25,12 @@ function getHTMLTemplate(name: string[]) {
 `;
 }
 
-function getComponentTemplate(name: string[]) {
+function getComponentTemplate(prefix: string[], name: string[]) {
     return `import {Component, ChangeDetectionStrategy} from '@angular/core';
 
 @Component({
     moduleId: module.id,
-    selector: '${getSelectorName(name)}',
+    selector: '${getSelectorName(prefix, name)}',
     templateUrl: './${getFileName(name, '.component.html')}',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,7 +40,7 @@ export class ${getClassName(name)} {
 `;
 }
 
-function getModuleTemplate(name: string[]) {
+function getModuleTemplate(prefix: string[], name: string[]) {
     return `import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 
@@ -55,16 +55,16 @@ import {CommonModule} from '@angular/common';
         CommonModule,
     ],
 })
-export class ${getModuleClassName(name)} {};
+export class ${getModuleClassName(prefix, name)} {};
 `;
 }
 
-function getDirectiveTemplate(name: string[]) {
+function getDirectiveTemplate(prefix: string[], name: string[]) {
     return `import {Directive} from '@angular/core';
 
 @Directive({
     moduleId: module.id,
-    selector: '${getDirectiveSelectorName(name)}',
+    selector: '${getDirectiveSelectorName(prefix, name)}',
 })
 export class ${getDirectiveClassName(name)} {
     // TODO implement directive
@@ -77,7 +77,7 @@ function camelCase(nameParts: string[], capitalizeFirst: boolean) {
 }
 
 function getNameParts(name: string): string[] {
-    return name.trim().replace(/([a-z](?=[A-Z]))/g, '$1\n').split('\n').map(part => part.toLowerCase());
+    return name.trim().replace(/([a-z](?=[A-Z]))/g, '$1\n').split('\n').map(part => part.toLowerCase()).filter(a => a.length > 0);
 }
 
 function getFolderName(nameParts: string[]): string {
@@ -92,21 +92,25 @@ function getModuleName(nameParts: string[]): string {
     return getFolderName(nameParts) + '.module.ts';
 }
 
-function getModuleClassName(nameParts: string[]): string {
-    return 'Lucid' + camelCase(nameParts, true) + 'Module';
+function getModuleClassName(prefix: string[], nameParts: string[]): string {
+    return camelCase(prefix.concat(nameParts), true) + 'Module';
 }
 
 
-function getSelectorName(nameParts: string[]): string {
-    return 'lucid-' + nameParts.join('-');
+function getSelectorName(prefix: string[], nameParts: string[]): string {
+    if (prefix.length) {
+        return `${prefix.join('-')}-${nameParts.join('-')}`;
+    } else {
+        return nameParts.join('-');
+    }
 }
 
 function getClassName(nameParts: string[]): string {
     return camelCase(nameParts, true) + 'Component';
 }
 
-function getDirectiveSelectorName(nameParts: string[]): string {
-    return 'lucid' + camelCase(nameParts, true);
+function getDirectiveSelectorName(prefix: string[], nameParts: string[]): string {
+    return camelCase(prefix.concat(nameParts), false);
 }
 
 function getDirectiveClassName(nameParts: string[]): string {
@@ -125,7 +129,7 @@ function writeFile(path: string, content: string): Promise<any> {
     });
 }
 
-function createModule(name: string[], inFolder: string):Promise<any> {
+function createModule(prefix: string[], name: string[], inFolder: string):Promise<any> {
     const containingFolder = path.join(inFolder, getFolderName(name));
 
     if (fs.existsSync(containingFolder)) {
@@ -137,7 +141,7 @@ function createModule(name: string[], inFolder: string):Promise<any> {
                 if (err) {
                     reject(err);
                 } else {
-                    writeFile(modulePath, getModuleTemplate(name)).then(resolve, reject);
+                    writeFile(modulePath, getModuleTemplate(prefix, name)).then(resolve, reject);
                 }
             })
         }).then(() => {
@@ -148,7 +152,7 @@ function createModule(name: string[], inFolder: string):Promise<any> {
     }
 }
 
-function createComponent(name: string[], inFolder: string):Promise<any> {
+function createComponent(prefix: string[], name: string[], inFolder: string):Promise<any> {
     const containingFolder = path.join(inFolder, getFolderName(name));
 
     if (fs.existsSync(containingFolder)) {
@@ -161,7 +165,7 @@ function createComponent(name: string[], inFolder: string):Promise<any> {
                     reject(err);
                 } else {
                     Promise.all([
-                        writeFile(componentPath, getComponentTemplate(name)),
+                        writeFile(componentPath, getComponentTemplate(prefix, name)),
                         writeFile(path.join(containingFolder, getFileName(name, '.component.html')), getHTMLTemplate(name)),
                         writeFile(path.join(containingFolder, getFileName(name, '.component.less')), getLessTemplate(name)),
                     ]).then(resolve, reject);
@@ -175,13 +179,13 @@ function createComponent(name: string[], inFolder: string):Promise<any> {
     }
 }
 
-function createDirective(name: string[], inFolder: string): Promise<any> {
+function createDirective(prefix: string[], name: string[], inFolder: string): Promise<any> {
     const directivePath = path.join(inFolder, getFileName(name, '.directive.ts'));
 
     if (fs.existsSync(directivePath)) {
         return Promise.reject(new Error(`File with name ${directivePath} already exists`));
     } else {
-        return writeFile(directivePath, getDirectiveTemplate(name)).then(() => {
+        return writeFile(directivePath, getDirectiveTemplate(prefix, name)).then(() => {
             return vscode.workspace.openTextDocument(directivePath).then(textDoc => {
                 return vscode.window.showTextDocument(textDoc);
             });
@@ -280,8 +284,18 @@ export function getNameOfObject(defaultName: string, prompt: string, exampleName
     }));
 }
 
+export function getPrefix(): string[] {
+    const result = vscode.workspace.getConfiguration('ngTemplates').prefix;
+
+    if (typeof result === 'string') {
+        return getNameParts(result);
+    } else {
+        return [];
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
-    const createComponentListener = vscode.commands.registerCommand('lucid-ng2.create-component', (uri:vscode.Uri) => {
+    const createComponentListener = vscode.commands.registerCommand('ngTemplates.create-component', (uri:vscode.Uri) => {
         if (!uri.fsPath) {
             vscode.window.showErrorMessage('No folder selected to contain new component');
             return;
@@ -294,7 +308,9 @@ export function activate(context: vscode.ExtensionContext) {
                 name.pop();
             }
 
-            return createComponent(name, uri.fsPath).then(() => {
+            const prefix = getPrefix();
+
+            return createComponent(prefix, name, uri.fsPath).then(() => {
                 return findModules(uri.fsPath).then((modules) => {
                     if (modules.length) {
                         return checkAddToModule(modules, name, uri.fsPath, FileType.Component);
@@ -308,11 +324,13 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(createComponentListener);
 
-    const createDirectiveListener = vscode.commands.registerCommand('lucid-ng2.create-directive', (uri:vscode.Uri) => {
+    const createDirectiveListener = vscode.commands.registerCommand('ngTemplates.create-directive', (uri:vscode.Uri) => {
         if (!uri.fsPath) {
             vscode.window.showErrorMessage('No folder selected to contain new directive');
             return;
         }
+
+        const prefix = getPrefix();
 
         getNameOfObject('NewDirective', 'Name of directive class', 'TestDirective, FooBarDirective').then((directiveName) => {
             const name = getNameParts(directiveName);
@@ -321,7 +339,7 @@ export function activate(context: vscode.ExtensionContext) {
                 name.pop();
             }
 
-            return createDirective(name, uri.fsPath).then(() => {
+            return createDirective(prefix, name, uri.fsPath).then(() => {
                 return findModules(uri.fsPath).then((modules) => {
                     if (modules.length) {
                         return checkAddToModule(modules, name, uri.fsPath, FileType.Directive);
@@ -335,11 +353,13 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(createDirectiveListener);
 
-    const createModuleListener = vscode.commands.registerCommand('lucid-ng2.create-module', (uri: vscode.Uri) => {
+    const createModuleListener = vscode.commands.registerCommand('ngTemplates.create-module', (uri: vscode.Uri) => {
         if (!uri.fsPath) {
             vscode.window.showErrorMessage('No folder selected to contain new module');
             return;
         }
+
+        const prefix = getPrefix();
 
         getNameOfObject('NewModule', 'Name of module class', 'TestModule FooBarModule').then((moduleName) => {
             const name = getNameParts(moduleName);
@@ -348,11 +368,11 @@ export function activate(context: vscode.ExtensionContext) {
                 name.pop();
             }
 
-            if (name[0] === 'lucid') {
-                name.shift();
+            if (prefix.every((part, index) => name[index] === part)) {
+                name.splice(0, prefix.length);
             }
 
-            return createModule(name, uri.fsPath);
+            return createModule(prefix, name, uri.fsPath);
         }).catch((err) => {
             vscode.window.showErrorMessage(err.toString());
             console.error(err);

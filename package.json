@@ -1,7 +1,7 @@
 {
-    "name": "lucid-ng2",
-    "displayName": "lucid-ng2",
-    "description": "Tools to make it easier to create and manage angular 2 modules and components",
+    "name": "ngTemplates",
+    "displayName": "VsCode Angular Templates",
+    "description": "Tools to make it easier to create and manage angular 2 modules, components, and directives",
     "version": "0.0.1",
     "publisher": "lucid",
     "engines": {
@@ -11,41 +11,52 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:lucid-ng2.create-component",
-        "onCommand:lucid-ng2.create-directive",
-        "onCommand:lucid-ng2.create-module"
+        "onCommand:ngTemplates.create-component",
+        "onCommand:ngTemplates.create-directive",
+        "onCommand:ngTemplates.create-module"
     ],
     "main": "./out/extension",
     "contributes": {
         "menus": {
             "explorer/context": [{
-                "command": "lucid-ng2.create-component",
+                "command": "ngTemplates.create-component",
                 "group": "1_modification",
                 "when": "explorerViewletVisible"
             },{
-                "command": "lucid-ng2.create-directive",
+                "command": "ngTemplates.create-directive",
                 "group": "1_modification",
                 "when": "explorerViewletVisible"
             },{
-                "command": "lucid-ng2.create-module",
+                "command": "ngTemplates.create-module",
                 "group": "1_modification",
                 "when": "explorerViewletVisible"
             }]
         },
         "commands": [
             {
-                "command": "lucid-ng2.create-component",
-                "title": "Create ng2 component"
+                "command": "ngTemplates.create-component",
+                "title": "Create angular component"
             },
             {
-                "command": "lucid-ng2.create-directive",
-                "title": "Create ng2 directive"
+                "command": "ngTemplates.create-directive",
+                "title": "Create angular directive"
             },
             {
-                "command": "lucid-ng2.create-module",
-                "title": "Create ng2 module"
+                "command": "ngTemplates.create-module",
+                "title": "Create angular module"
             }
-        ]
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "VsCode Angular Configuration",
+            "properties": {
+                "ngTemplates.prefix": {
+                    "type": "string",
+                    "default": "lucid",
+                    "description": "Specifies a prefix to add to modules, components, and directives created"
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
