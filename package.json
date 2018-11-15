@@ -1,9 +1,9 @@
 {
     "name": "ngTemplates",
-    "displayName": "VsCode Angular Templates",
+    "displayName": "VSCode Angular Templates",
     "description": "Tools to make it easier to create and manage angular 2 modules, components, and directives",
     "version": "0.0.1",
-    "publisher": "lucid",
+    "publisher": "lambertjamesd",
     "engines": {
         "vscode": "^1.18.0"
     },
