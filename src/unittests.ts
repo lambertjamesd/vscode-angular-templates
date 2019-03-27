@@ -242,6 +242,11 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
+        if (fs.existsSync(uri.fsPath)) {
+            vscode.window.showErrorMessage(`A test file with the name ${uri.fsPath} already exists`);
+            return;
+        }
+
         try 
         {
             const componentPath = uri.fsPath.slice(0, -3) + '.spec.ts';
