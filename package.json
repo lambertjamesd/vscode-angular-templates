@@ -2,8 +2,12 @@
     "name": "ngTemplates",
     "displayName": "VSCode Angular Templates",
     "description": "Tools to make it easier to create and manage angular 2 modules, components, and directives",
-    "version": "0.0.1",
+    "version": "1.1.0",
     "publisher": "lambertjamesd",
+    "repository": {
+        "url": "https://github.com/lambertjamesd/vscode-angular-templates",
+        "type": "git"
+    },
     "engines": {
         "vscode": "^1.18.0"
     },
@@ -13,7 +17,8 @@
     "activationEvents": [
         "onCommand:ngTemplates.create-component",
         "onCommand:ngTemplates.create-directive",
-        "onCommand:ngTemplates.create-module"
+        "onCommand:ngTemplates.create-module",
+        "onCommand:ngTemplates.create-unit-test"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -30,6 +35,10 @@
                 "command": "ngTemplates.create-module",
                 "group": "1_modification",
                 "when": "explorerViewletVisible"
+            },{
+                "command": "ngTemplates.create-unit-test",
+                "group": "1_modification",
+                "when": "explorerViewletVisible"
             }]
         },
         "commands": [
@@ -44,6 +53,10 @@
             {
                 "command": "ngTemplates.create-module",
                 "title": "Create angular module"
+            },
+            {
+                "command": "ngTemplates.create-unit-test",
+                "title": "Create unit test"
             }
         ],
         "configuration": {
