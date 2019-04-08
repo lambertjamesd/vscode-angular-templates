@@ -2,7 +2,7 @@
     "name": "ngTemplates",
     "displayName": "VSCode Angular Templates",
     "description": "Tools to make it easier to create and manage angular 2 modules, components, and directives",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "publisher": "lambertjamesd",
     "repository": {
         "url": "https://github.com/lambertjamesd/vscode-angular-templates",

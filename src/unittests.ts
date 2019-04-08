@@ -242,14 +242,14 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        if (fs.existsSync(uri.fsPath)) {
-            vscode.window.showErrorMessage(`A test file with the name ${uri.fsPath} already exists`);
-            return;
-        }
-
         try 
         {
             const componentPath = uri.fsPath.slice(0, -3) + '.spec.ts';
+
+            if (fs.existsSync(componentPath)) {
+                vscode.window.showErrorMessage(`A test file with the name ${componentPath} already exists`);
+                return;
+            }
     
             const className = await findPrimaryExport(uri.fsPath);
             const tsProjectDir = findTsProject(uri.fsPath);
