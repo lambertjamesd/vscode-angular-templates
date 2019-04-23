@@ -131,9 +131,9 @@ export function generateComponentTestWithTestModule(className:string, filename: 
     const selectorName = getSelectorName(getPrefix(), nameParts);
 
     return `import {Component, NgModule} from '@angular/core';
-import {ng2AutoProvides} from '@lucid/ng2testing/injector';
-import {TestEnvironment} from '@lucid/ng2testing/testenvironment';
-import {testComponent, testModule} from '@lucid/ng2testing/testmodule';
+import {ng2AutoProvides} from '@lucid/angular/testing/injector';
+import {TestEnvironment} from '@lucid/angular/testing/testenvironment';
+import {testComponent, testModule} from '@lucid/angular/testing/testmodule';
 ${generateMockClockImports(filename, asyncAwait)}
 
 import {${moduleName.moduleName}} from '${moduleName.modulePath}';
@@ -169,8 +169,8 @@ describe(
 
 
 export function generateComponentTest(className:string, filename: string, autoProvidesDir: string, moduleName: ModuleInfo, asyncAwait: boolean) {
-    return `import {TestEnvironment} from '@lucid/ng2testing/testenvironment';
-import {testComponent, testModule} from '@lucid/ng2testing/testmodule';
+    return `import {TestEnvironment} from '@lucid/angular/testing/testenvironment';
+import {testComponent, testModule} from '@lucid/angular/testing/testmodule';
 ${generateMockClockImports(filename, asyncAwait)}
 
 import {${className}} from './${path.basename(filename, '.ts')}';
@@ -215,15 +215,15 @@ export function generateTest(className: string, asyncAwait: boolean): string {
 export function generateMockClockImports(filename: string, asyncAswait: boolean): string {
     if (asyncAswait) {
         return `import {asyncAwaitMockClock} from '@lucid/pipelinedeps/test/asyncmockclock';
-import {AsyncMockInteractions} from '@lucid/ng2testing/asyncmockinteractions';`;
+import {AsyncMockInteractions} from '@lucid/angular/testing/asyncmockinteractions';`;
     } else {
-        const ng2commonLocation = filename.indexOf('ng2common');
+        const ng2commonLocation = filename.indexOf('angular/common');
         if (ng2commonLocation === -1) {
-            return `import {fakeAsyncWrapper} from '@lucid/ng2common/test/util';`;
+            return `import {fakeAsyncWrapper} from '@lucid/angular/common/test/util';`;
         } else {
             const relativePath = ensureDot(path.relative(
                 path.dirname(filename), 
-                filename.substr(0, ng2commonLocation) + 'ng2common/test/util'
+                filename.substr(0, ng2commonLocation) + 'angular/common/test/util'
             ));
             return `import {fakeAsyncWrapper} from '${relativePath}';`;
         }
