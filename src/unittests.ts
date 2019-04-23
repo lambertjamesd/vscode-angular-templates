@@ -29,7 +29,12 @@ export function findTsProject(filename: string): string|null {
     }
 }
 
-export async function findPrimaryExport(inFile: string): Promise<string|null> {
+export interface ClassMetadata {
+    name: string|null;
+    angularInjector: boolean;
+};
+
+export async function findPrimaryExport(inFile: string): Promise<ClassMetadata> {
     let expectedClassName = path.basename(inFile, '.ts');
 
     if (expectedClassName.endsWith('.component')) {
@@ -40,13 +45,23 @@ export async function findPrimaryExport(inFile: string): Promise<string|null> {
 
     const regex = new RegExp(`export class (${expectedClassName})`, 'gmi');
 
-    const match = regex.exec(doc.getText());
+    const docText = doc.getText();
+
+    const match = regex.exec(docText);
+
+    const angularInjector = docText.indexOf('@Injectable') !== -1;
 
     if (match) {
-        return match[1];
+        return {
+            name: match[1],
+            angularInjector: angularInjector,
+        };
     }
 
-    return null;
+    return {
+        name: null,
+        angularInjector: angularInjector,
+    };
 }
 
 export type ModuleInfo = {modulePath: string, moduleName: string};
@@ -115,6 +130,29 @@ describe(module.id, () => {
     it('should work', () => {
         const injector = setupInjector([
             mockProvides,
+            // Providing the class here ensures that a mock version isn't injected instead
+            ${className},
+        ]);
+
+        const ${toLowerCamelCase(className)} = injector.get(${className});
+
+        // TODO write test code
+    });
+});`;
+}
+
+export function generateInjectorClassTest(className: string, filename: string, autoProvidesDir: string) {
+    return `import {ReflectiveInjector} from '@angular/core';
+import {ng2AutoProvides} from '@lucid/angular/testing/injector';
+
+import {${className}} from './${path.basename(filename, '.ts')}';
+
+import {mockProvides, ngMockProvides} from '${autoProvidesDir}';
+
+describe(module.id, () => {
+    it('should work', () => {
+        const injector = ReflectiveInjector.resolveAndCreate([
+            ng2AutoProvides(mockProvides, ngMockProvides),
             // Providing the class here ensures that a mock version isn't injected instead
             ${className},
         ]);
@@ -251,7 +289,8 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
     
-            const className = await findPrimaryExport(uri.fsPath);
+            const classMetadata = await findPrimaryExport(uri.fsPath);
+            const className = classMetadata.name;
             const tsProjectDir = findTsProject(uri.fsPath);
             const autoProvideDir = tsProjectDir && autoProvidesPath(uri.fsPath, tsProjectDir);
             const filename = uri.fsPath;
@@ -282,7 +321,11 @@ export function activate(context: vscode.ExtensionContext) {
                     testContent = '// could not find module for component being tested';
                 }
             } else if (className && autoProvideDir) {
-                testContent = generateClassTest(className, filename, autoProvideDir);
+                if (classMetadata.angularInjector) {
+                    testContent = generateInjectorClassTest(className, filename, autoProvideDir);
+                } else {
+                    testContent = generateClassTest(className, filename, autoProvideDir);
+                }
             } else if (autoProvideDir) {
                 testContent = generateClasslessTest(autoProvideDir);
             } else {
