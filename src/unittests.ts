@@ -74,12 +74,7 @@ export async function findModuleForClass(filename: string, className: string): P
         const text = await doc.getText();
 
         if (text.indexOf(className) !== -1) {
-            const lowercaseName = path.basename(modulePath, '.module.ts');
-            const moduleClassName = getModuleClassName(getPrefix(), [lowercaseName]);
-
-            console.log(moduleClassName);
-
-            const moduleNameFinder = new RegExp(`export class (${moduleClassName})`, 'gmi');
+            const moduleNameFinder = /export\s+class\s+([\w_][\w\d_]+Module)/gmi;
             const match = moduleNameFinder.exec(text);
 
             if (match) {
@@ -96,19 +91,10 @@ export async function findModuleForClass(filename: string, className: string): P
     return null;
 }
 
-export function generateBlankTest() {
-    return `
-describe(module.id, () => {
-    it('should work', () => {
-        // TODO write test code
-    });
-});`;
-}
+export function generateClasslessTest() {
+    return `import {mockProvides} from '@lucid/injector/mock/mockprovides';
+import {setupInjector} from '@lucid/testing/testsetup';
 
-export function generateClasslessTest(autoProvidesDir: string) {
-    return `import {setupInjector} from '@lucid/testing/testsetup';
-
-import {mockProvides} from '${autoProvidesDir}';
 
 describe(module.id, () => {
     it('should work', () => {
@@ -119,12 +105,12 @@ describe(module.id, () => {
 });`;
 }
 
-export function generateClassTest(className: string, filename: string, autoProvidesDir: string) {
-    return `import {setupInjector} from '@lucid/testing/testsetup';
+export function generateClassTest(className: string, filename: string) {
+    return `import {mockProvides} from '@lucid/injector/mock/mockprovides';
+import {setupInjector} from '@lucid/testing/testsetup';
 
 import {${className}} from './${path.basename(filename, '.ts')}';
 
-import {mockProvides} from '${autoProvidesDir}';
 
 describe(module.id, () => {
     it('should work', () => {
@@ -141,13 +127,14 @@ describe(module.id, () => {
 });`;
 }
 
-export function generateInjectorClassTest(className: string, filename: string, autoProvidesDir: string) {
+export function generateInjectorClassTest(className: string, filename: string) {
     return `import {ReflectiveInjector} from '@angular/core';
 import {ng2AutoProvides} from '@lucid/angular/testing/injector';
+import {mockProvides} from '@lucid/injector/mock/mockprovides';
+import {ngMockProvides} from '@lucid/injector/mock/ngmockprovides';
 
 import {${className}} from './${path.basename(filename, '.ts')}';
 
-import {mockProvides, ngMockProvides} from '${autoProvidesDir}';
 
 describe(module.id, () => {
     it('should work', () => {
@@ -164,7 +151,7 @@ describe(module.id, () => {
 });`;
 }
 
-export function generateComponentTestWithTestModule(className:string, filename: string, autoProvidesDir: string, moduleName: ModuleInfo, asyncAwait: boolean) {
+export function generateComponentTestWithTestModule(className:string, filename: string, moduleName: ModuleInfo, asyncAwait: boolean) {
     const nameParts = getComponentNameParts(className);
     const selectorName = getSelectorName(getPrefix(), nameParts);
 
@@ -172,16 +159,14 @@ export function generateComponentTestWithTestModule(className:string, filename: 
 import {ng2AutoProvides} from '@lucid/angular/testing/injector';
 import {TestEnvironment} from '@lucid/angular/testing/testenvironment';
 import {testComponent, testModule} from '@lucid/angular/testing/testmodule';
+import {mockProvides} from '@lucid/injector/mock/mockprovides';
+import {ngMockProvides} from '@lucid/injector/mock/ngmockprovides';
 ${generateMockClockImports(filename, asyncAwait)}
 
 import {${moduleName.moduleName}} from '${moduleName.modulePath}';
-import {mockProvides, ngMockProvides} from '${autoProvidesDir}';
 
 @Component({
     template: '<${selectorName}></${selectorName}>',
-    providers: [
-        ng2AutoProvides(mockProvides, ngMockProvides),
-    ],
 })
 class Test${className} {
 }
@@ -197,6 +182,8 @@ describe(
     testModule(
         {
             module: TestModule,
+            lucidProvides: mockProvides,
+            ngProvides: ngMockProvides,
         },
         () => {
             ${generateTest('Test' + className, asyncAwait)}
@@ -206,15 +193,16 @@ describe(
 }
 
 
-export function generateComponentTest(className:string, filename: string, autoProvidesDir: string, moduleName: ModuleInfo, asyncAwait: boolean) {
+export function generateComponentTest(className:string, filename: string, moduleName: ModuleInfo, asyncAwait: boolean) {
     return `import {TestEnvironment} from '@lucid/angular/testing/testenvironment';
 import {testComponent, testModule} from '@lucid/angular/testing/testmodule';
+import {mockProvides} from '@lucid/injector/mock/mockprovides';
+import {ngMockProvides} from '@lucid/injector/mock/ngmockprovides';
 ${generateMockClockImports(filename, asyncAwait)}
 
 import {${className}} from './${path.basename(filename, '.ts')}';
 
 import {${moduleName.moduleName}} from '${moduleName.modulePath}';
-import {mockProvides, ngMockProvides} from '${autoProvidesDir}';
 
 describe(
     module.id,
@@ -292,11 +280,10 @@ export function activate(context: vscode.ExtensionContext) {
             const classMetadata = await findPrimaryExport(uri.fsPath);
             const className = classMetadata.name;
             const tsProjectDir = findTsProject(uri.fsPath);
-            const autoProvideDir = tsProjectDir && autoProvidesPath(uri.fsPath, tsProjectDir);
             const filename = uri.fsPath;
             let testContent = '';
     
-            if (filename.endsWith('.component.ts') && className && tsProjectDir && autoProvideDir) {
+            if (filename.endsWith('.component.ts') && className && tsProjectDir) {
                 const moduleInfo = await findModuleForClass(uri.fsPath, className);
 
                 if (moduleInfo) {
@@ -313,23 +300,21 @@ export function activate(context: vscode.ExtensionContext) {
                     const useAsyncAswait = mockClock === useAsyncAwaitOptions[0];
 
                     if (createTestHtml === useHtmlOptions[0]) {
-                        testContent = generateComponentTestWithTestModule(className, filename, autoProvideDir, moduleInfo, useAsyncAswait);
+                        testContent = generateComponentTestWithTestModule(className, filename, moduleInfo, useAsyncAswait);
                     } else {
-                        testContent = generateComponentTest(className, filename, autoProvideDir, moduleInfo, useAsyncAswait);
+                        testContent = generateComponentTest(className, filename, moduleInfo, useAsyncAswait);
                     }
                 } else {
                     testContent = '// could not find module for component being tested';
                 }
-            } else if (className && autoProvideDir) {
+            } else if (className) {
                 if (classMetadata.angularInjector) {
-                    testContent = generateInjectorClassTest(className, filename, autoProvideDir);
+                    testContent = generateInjectorClassTest(className, filename);
                 } else {
-                    testContent = generateClassTest(className, filename, autoProvideDir);
+                    testContent = generateClassTest(className, filename);
                 }
-            } else if (autoProvideDir) {
-                testContent = generateClasslessTest(autoProvideDir);
             } else {
-                testContent = generateBlankTest();
+                testContent = generateClasslessTest();
             }
 
             await writeFile(componentPath, testContent);
