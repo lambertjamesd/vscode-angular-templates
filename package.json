@@ -23,23 +23,28 @@
     "main": "./out/extension",
     "contributes": {
         "menus": {
-            "explorer/context": [{
-                "command": "ngTemplates.create-component",
-                "group": "1_modification",
-                "when": "explorerViewletVisible"
-            },{
-                "command": "ngTemplates.create-directive",
-                "group": "1_modification",
-                "when": "explorerViewletVisible"
-            },{
-                "command": "ngTemplates.create-module",
-                "group": "1_modification",
-                "when": "explorerViewletVisible"
-            },{
-                "command": "ngTemplates.create-unit-test",
-                "group": "1_modification",
-                "when": "explorerViewletVisible"
-            }]
+            "explorer/context": [
+                {
+                    "command": "ngTemplates.create-component",
+                    "group": "1_modification",
+                    "when": "explorerViewletVisible"
+                },
+                {
+                    "command": "ngTemplates.create-directive",
+                    "group": "1_modification",
+                    "when": "explorerViewletVisible"
+                },
+                {
+                    "command": "ngTemplates.create-module",
+                    "group": "1_modification",
+                    "when": "explorerViewletVisible"
+                },
+                {
+                    "command": "ngTemplates.create-unit-test",
+                    "group": "1_modification",
+                    "when": "explorerViewletVisible"
+                }
+            ]
         },
         "commands": [
             {

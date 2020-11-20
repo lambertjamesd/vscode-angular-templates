@@ -39,6 +39,8 @@ export async function findPrimaryExport(inFile: string): Promise<ClassMetadata> 
 
     if (expectedClassName.endsWith('.component')) {
         expectedClassName = expectedClassName.slice(0, -('.component'.length)) + 'component';
+    } else if (expectedClassName.endsWith('.injectable')) {
+        expectedClassName = expectedClassName.slice(0, -('.injectable'.length)) + '(injectable)?';
     }
 
     const doc = await vscode.workspace.openTextDocument(inFile);
@@ -156,7 +158,6 @@ export function generateComponentTestWithTestModule(className:string, filename: 
     const selectorName = getSelectorName(getPrefix(), nameParts);
 
     return `import {Component, NgModule} from '@angular/core';
-import {ng2AutoProvides} from '@lucid/angular/testing/injector';
 import {TestEnvironment} from '@lucid/angular/testing/testenvironment';
 import {testComponent, testModule} from '@lucid/angular/testing/testmodule';
 import {mockProvides} from '@lucid/injector/mock/mockprovides';
@@ -245,11 +246,11 @@ import {AsyncMockInteractions} from '@lucid/angular/testing/asyncmockinteraction
     } else {
         const ng2commonLocation = filename.indexOf('angular/common');
         if (ng2commonLocation === -1) {
-            return `import {fakeAsyncWrapper} from '@lucid/angular/common/test/util';`;
+            return `import {fakeAsyncWrapper} from '@lucid/angular/testing/util';`;
         } else {
             const relativePath = ensureDot(path.relative(
                 path.dirname(filename), 
-                filename.substr(0, ng2commonLocation) + 'angular/common/test/util'
+                filename.substr(0, ng2commonLocation) + 'angular/testing/util'
             ));
             return `import {fakeAsyncWrapper} from '${relativePath}';`;
         }
@@ -322,7 +323,6 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.window.showTextDocument(textDoc);
         } catch (err) {
             vscode.window.showErrorMessage(err.toString());
-            console.error(err);
         }
     });
     context.subscriptions.push(createUnitTestListener);
