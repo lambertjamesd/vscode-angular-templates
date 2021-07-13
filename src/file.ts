@@ -8,7 +8,7 @@ export function writeFile(path: string, content: string): Promise<any> {
             if (err) {
                 reject(err);
             } else {
-                resolve();
+                resolve(1);
             }
         });
     });
@@ -36,6 +36,36 @@ export function findModules(inDirectory: string): Promise<string[]> {
                     }, reject);
                 } else {
                     resolve(result);
+                }
+            }
+        });
+    });
+}
+
+export function findBuild(inDirectory: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        fs.readdir(inDirectory, (err, items) => {
+            if (err) {
+                reject(err);
+            } else {
+                const index = items.indexOf('BUILD.bazel');
+
+                if(index != -1) {
+                    resolve(path.join(inDirectory, 'BUILD.bazel'));
+                }
+
+                const next = path.join(inDirectory, '..');
+
+                const doNext = (vscode.workspace.workspaceFolders || []).some((folder) => {
+                    return path.relative(folder.uri.fsPath, next).substr(0, 2) !== '..';
+                });
+
+                if (doNext) {
+                    findBuild(next).then((moreBuilds) => {
+                        resolve(moreBuilds);
+                    }, reject);
+                } else {
+                    reject('Could not find BUILD file.');
                 }
             }
         });

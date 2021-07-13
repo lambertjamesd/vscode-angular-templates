@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {writeFile, findModules} from './file';
+import {writeFile, findModules, findBuild} from './file';
 import {ModuleModifier} from './modulemodifier';
 import {getNameParts, getComponentNameParts, getSelectorName, getPrefix, camelCase, getModuleClassName} from './naming';
 
@@ -225,6 +225,18 @@ export function getNameOfObject(defaultName: string, prompt: string, exampleName
     }));
 }
 
+export async function goToBuild(inDirectory: string) {
+    findBuild(inDirectory).then(buildPath => {
+        if(buildPath) {
+            return vscode.workspace.openTextDocument(buildPath).then((textDoc) => {
+                return vscode.window.showTextDocument(textDoc);
+            });
+        } else {
+            vscode.window.showErrorMessage('No path found for BUILD file :(');
+        }
+    });
+}
+
 export function activate(context: vscode.ExtensionContext) {
     const createComponentListener = vscode.commands.registerCommand('ngTemplates.create-component', (uri:vscode.Uri) => {
         if (!uri.fsPath) {
@@ -306,6 +318,16 @@ export function activate(context: vscode.ExtensionContext) {
         });
     });
     context.subscriptions.push(createModuleListener);
+
+    const findBuildListener = vscode.commands.registerCommand('ngTemplates.find-build', (uri: vscode.Uri) => {
+        
+        if (!uri.fsPath) {
+            vscode.window.showErrorMessage('No folder selected to find a BUILD file');
+            return;
+        }
+        goToBuild(path.dirname(uri.fsPath));
+    });
+    context.subscriptions.push(findBuildListener);
 }
 
 export function deactivate() {

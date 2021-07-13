@@ -5,7 +5,7 @@
     "version": "1.1.4",
     "publisher": "lambertjamesd",
     "repository": {
-        "url": "https://github.com/lambertjamesd/vscode-angular-templates",
+        "url": "https://github.com/mperez-lucid/vscode-angular-templates",
         "type": "git"
     },
     "engines": {
@@ -18,7 +18,8 @@
         "onCommand:ngTemplates.create-component",
         "onCommand:ngTemplates.create-directive",
         "onCommand:ngTemplates.create-module",
-        "onCommand:ngTemplates.create-unit-test"
+        "onCommand:ngTemplates.create-unit-test",
+        "onCommand:ngTemplates.find-build"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -43,6 +44,11 @@
                     "command": "ngTemplates.create-unit-test",
                     "group": "1_modification",
                     "when": "explorerViewletVisible"
+                },
+                {
+                    "command": "ngTemplates.find-build",
+                    "group": "1_modification",
+                    "when": "explorerViewletVisible"
                 }
             ]
         },
@@ -62,6 +68,10 @@
             {
                 "command": "ngTemplates.create-unit-test",
                 "title": "Create unit test"
+            },
+            {
+                "command": "ngTemplates.find-build",
+                "title": "Find BUILD file"
             }
         ],
         "configuration": {
@@ -84,9 +94,9 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6",
+        "@types/mocha": "^2.2.42",
         "@types/node": "^7.0.43",
-        "@types/mocha": "^2.2.42"
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.37"
     }
 }
